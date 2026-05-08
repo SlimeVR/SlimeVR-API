@@ -1,7 +1,5 @@
-import { ManifestController } from "./controller/manifest.controller";
+import { ManifestController } from './controller/manifest.controller';
 
-export { ManifestController }
+export { ManifestController };
 
-export const Controllers = [
-    ManifestController
-]
+export const Controllers = [ManifestController];

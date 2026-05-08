@@ -1,14 +1,5 @@
 import { defineRelations } from 'drizzle-orm';
-import {
-  pgTable,
-  varchar,
-  text,
-  timestamp,
-  unique,
-  boolean,
-  numeric,
-  integer,
-} from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, boolean, integer } from 'drizzle-orm/pg-core';
 
 export const Channel = pgTable('channels', {
   id: varchar({ length: 42 }).primaryKey(),

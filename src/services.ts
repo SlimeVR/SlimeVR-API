@@ -1,8 +1,5 @@
-import { ManifestService } from "./service/manifest.service";
+import { ManifestService } from './service/manifest.service';
 
+export { ManifestService };
 
-export { ManifestService }
-
-export const Services = [
-    ManifestService
-]
+export const Services = [ManifestService];

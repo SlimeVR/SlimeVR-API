@@ -21,9 +21,9 @@ if (!GITHUB_REPOSITORY) {
 }
 
 const [GITHUB_OWNER, GITHUB_REPO] = GITHUB_REPOSITORY.split('/');
-console.log(GITHUB_REPOSITORY)
-console.log(`Github owner: ${GITHUB_OWNER}`)
-console.log(`Github Repository: ${GITHUB_REPO}`)
+console.log(GITHUB_REPOSITORY);
+console.log(`Github owner: ${GITHUB_OWNER}`);
+console.log(`Github Repository: ${GITHUB_REPO}`);
 if (!GITHUB_OWNER || !GITHUB_REPO) {
   console.error('GITHUB_REPOSITORY must be in the format "owner/repo".');
   process.exit(1);
@@ -76,14 +76,12 @@ const STABLE_CHANNEL: UpdateConfig = {
 
 const UPDATE_MANIFEST_FILE = 'update-manifest.json';
 
-let updateManifest: UpdateManifest = {
+const updateManifest: UpdateManifest = {
   default_channel: DEFAULT_CHANNEL,
   channels: {},
 };
 
-
 export class generateManifest {
-
   async generateManifest() {
     const releases = await fetchAllGithubReleases(
       octokit,

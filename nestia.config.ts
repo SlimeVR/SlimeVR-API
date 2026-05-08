@@ -1,6 +1,5 @@
 import { INestiaConfig } from '@nestia/sdk';
 import { NestFactory } from '@nestjs/core';
-// import { FastifyAdapter } from "@nestjs/platform-fastify";
 
 import { AppModule } from 'src/app.module';
 
