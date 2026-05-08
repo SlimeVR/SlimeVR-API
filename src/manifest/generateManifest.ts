@@ -13,8 +13,8 @@ import {
   type Version,
 } from './types';
 import { asyncMap } from './utils';
+import { GITHUB_REPOSITORY } from 'src/env';
 
-const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
 if (!GITHUB_REPOSITORY) {
   console.error('GITHUB_REPOSITORY is not set.');
   process.exit(1);

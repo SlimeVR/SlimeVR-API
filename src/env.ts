@@ -11,6 +11,7 @@ export const DATABASE_URL = process.env.DATABASE_URL ?? '';
 export const S3_BUCKET = process.env.S3_BUCKET ?? '';
 export const S3_ENDPOINT = process.env.S3_ENDPOINT ?? '';
 export const SENTRY_DSN = process.env.SENTRY_DSN ?? '';
+export const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY ?? '';
 
 export const getS3Config = async () => {
   // This is kinda a hack but there is cases when the keys are not here but asked during build phase
