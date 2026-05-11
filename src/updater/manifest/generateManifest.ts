@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Octokit } from '@octokit/rest';
 import * as fs from 'node:fs';
 import { parse as parseSemver, SemVer } from 'semver';
@@ -13,7 +15,7 @@ import {
   type Version,
 } from './types';
 import { asyncMap } from './utils';
-import { GITHUB_REPOSITORY } from 'src/env';
+import { GITHUB_REPOSITORY } from '../../env';
 
 if (!GITHUB_REPOSITORY) {
   console.error('GITHUB_REPOSITORY is not set.');
@@ -34,8 +36,6 @@ const octokit = new Octokit({
 });
 
 const DEFAULT_CHANNEL = 'stable' as ChannelName;
-const LATEST_WEB_INSTALLER =
-  'https://github.com/SlimeVR/SlimeVR-Installer/releases/latest/download/slimevr_web_installer.exe';
 const WINDOWS_X86_64_ZIP_FILENAME = 'SlimeVR-win64.zip';
 const LINUX_AMD64_APPIMAGE_FILENAME = 'SlimeVR-amd64.AppImage';
 const LINUX_AMD64_APPIMAGE_FILENAME_ALT = 'SlimeVR-amd64.appimage';
@@ -118,9 +118,9 @@ export class generateManifest {
 
       for (const [_, version, tag, v, config] of releases) {
         if (v.release_notes) {
-          console.log(`Release ${version} has release notes.`);
+          console.log(`Release ${version.toString()} has release notes.`);
         } else {
-          console.warn(`Release ${version} has no release notes.`);
+          console.warn(`Release ${version.toString()} has no release notes.`);
         }
 
         if (version.prerelease.length === 0) {
@@ -155,7 +155,7 @@ export class generateManifest {
     }
 
     if (version.compare(NEWEST_UNSUPPORTED_VERSION) <= 0) {
-      console.warn(`Skipping unsupported version: ${version}`);
+      console.warn(`Skipping unsupported version: ${version.toString()}`);
       return null;
     }
 
@@ -167,7 +167,7 @@ export class generateManifest {
       const res = await fetch(releasedUpdateConfig.browser_download_url);
       if (!res.ok) {
         console.error(
-          `Failed to fetch update config for release ${version}: ${res.status} ${res.statusText}`
+          `Failed to fetch update config for release ${version.toString()}: ${res.status} ${res.statusText}`
         );
         process.exit(1);
       }

@@ -1,7 +1,7 @@
 import { INestiaConfig } from '@nestia/sdk';
 import { NestFactory } from '@nestjs/core';
 
-import { AppModule } from 'src/app.module';
+import { AppModule } from './src/app.module';
 
 const camelize = (word: string, index: number) =>
   !word || index == 0 ? word : word[0].toUpperCase() + word.slice(1);

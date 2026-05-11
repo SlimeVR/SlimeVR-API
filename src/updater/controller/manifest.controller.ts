@@ -3,7 +3,9 @@ import { createReadStream } from 'fs';
 import { join } from 'path';
 import type { Response } from 'express';
 import { ManifestService } from '../services';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Manifest')
 @Controller('manifest')
 export class ManifestController {
   constructor(private readonly service: ManifestService) {}
@@ -16,10 +18,14 @@ export class ManifestController {
     file.pipe(res);
   }
 
+  @Post('/seed')
+  async seedDatabaseFromManifest() {
+    return await this.service.seedfromManifest();
+  }
+
   @Post()
-  generateManifest() {
+  async generateManifest() {
     console.log('generating release manifest');
-    this.service.createManifest();
-    return 'generating release manifest';
+    return await this.service.createManifest();
   }
 }

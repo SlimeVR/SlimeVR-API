@@ -1,27 +1,49 @@
 import { defineRelations } from 'drizzle-orm';
-import { pgTable, varchar, text, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 
 export const Channel = pgTable('channels', {
-  id: varchar({ length: 42 }).primaryKey(),
-  description: text(),
-  defaultChannel: boolean(),
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: text().notNull(),
+  description: text().notNull(),
+  defaultChannel: boolean().default(false).notNull(),
 });
 
 export const Version = pgTable('version', {
-  id: varchar({ length: 42 }).primaryKey(),
-  semvr: text(),
-  changelog: text(),
-  channelId: integer('channel_id'),
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  semver: text().notNull(),
+  changelog: text().notNull(),
+  channelId: integer('channel_id')
+    .notNull()
+    .references(() => Channel.id),
 });
 
-const relations = defineRelations({ Version, Channel }, (r) => ({
+export const Release = pgTable('release', {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  platform: text().notNull(),
+  architecture: text().notNull(),
+  url: text().notNull(),
+  checksum: text().notNull(),
+  run: jsonb('run').notNull().default([]),
+  versionId: integer('version_id')
+    .notNull()
+    .references(() => Version.id),
+});
+
+const relations = defineRelations({ Version, Channel, Release }, (r) => ({
+  Channel: {
+    versions: r.many.Version(),
+  },
   Version: {
     channel: r.one.Channel({
       from: r.Version.channelId,
       to: r.Channel.id,
     }),
+    releases: r.many.Release(),
   },
-  Channel: {
-    versions: r.many.Version(),
+  Release: {
+    version: r.one.Version({
+      from: r.Release.versionId,
+      to: r.Version.id,
+    }),
   },
 }));

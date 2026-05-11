@@ -5,7 +5,7 @@ import { OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { PORT } from './env';
 
 import './instrument';
-import NESTIA_CONFIG from 'nestia.config';
+import NESTIA_CONFIG from '../nestia.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

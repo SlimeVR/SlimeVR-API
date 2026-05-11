@@ -3,13 +3,9 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DatabaseService {
-  private readonly db: NodePgDatabase;
+  public readonly db: NodePgDatabase;
 
-  constructor(@Inject('URL') private url: string) {
+  constructor(@Inject('URL') private readonly url: string) {
     this.db = drizzle(url);
-  }
-
-  get(): NodePgDatabase {
-    return this.db;
   }
 }

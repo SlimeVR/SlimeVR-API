@@ -1,6 +1,7 @@
 import { DatabaseService } from './db.service';
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Global, Module } from '@nestjs/common';
 
+@Global()
 @Module({})
 export class DatabaseModule {
   static register(url: string): DynamicModule {
@@ -13,7 +14,7 @@ export class DatabaseModule {
         },
         DatabaseService,
       ],
-      exports: [DatabaseService],
+      exports: [DatabaseService, 'URL'],
     };
   }
 }
