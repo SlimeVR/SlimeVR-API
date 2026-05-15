@@ -1,9 +1,16 @@
 import { TypedParam } from '@nestia/core';
-import { Controller, Get, StreamableFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  StreamableFile,
+} from '@nestjs/common';
 import { createReadStream, existsSync, statSync } from 'fs';
 import { join } from 'path';
 import { ApiTags } from '@nestjs/swagger';
+import { Public } from '../../auth/public.decorator';
 
+@Public()
 @ApiTags('Download')
 @Controller('download')
 export class DownloadController {
@@ -23,12 +30,11 @@ export class DownloadController {
 
     console.log(filePath);
     if (!existsSync(filePath)) {
-      throw new Error('File not found');
+      throw new NotFoundException('File not found');
     }
 
     const fileStream = createReadStream(filePath);
     const stats = statSync(filePath);
-    console.log(stats.size);
 
     return new StreamableFile(fileStream, {
       type: 'application/octet-stream',

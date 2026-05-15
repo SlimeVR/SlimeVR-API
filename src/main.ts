@@ -3,14 +3,17 @@ import { AppModule } from './app.module';
 import { NestiaSwaggerComposer } from '@nestia/sdk';
 import { OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { PORT } from './env';
+import * as readline from 'readline';
 
 import './instrument';
 import NESTIA_CONFIG from '../nestia.config';
+import { AuthService } from './auth/auth.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: true,
   });
+
   const document = await NestiaSwaggerComposer.document(app, {
     ...NESTIA_CONFIG.swagger,
   });
@@ -28,6 +31,49 @@ async function bootstrap() {
       },
     },
   });
+
   await app.listen(PORT);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false,
+  });
+
+  console.log(
+    '--- Live Console Active. Type "gentoken <userId>" to generate a JWT ---'
+  );
+  console.log('--- Type "revoketoken <token>" to revoke a JWT ---');
+  rl.on('line', (line) => {
+    handleCommand(line).catch((err) =>
+      console.error('Console Command Error:', err)
+    );
+  });
+
+  async function handleCommand(line: string) {
+    const [command, ...args] = line.trim().split(' ');
+
+    if (command === 'gentoken') {
+      const [sub, ...permissions] = args;
+      const authService = app.get(AuthService);
+      const token = await authService.createToken();
+      console.log(`\nToken generated for: ${sub}`);
+      console.log(`Permissions: [${permissions.join(', ') || 'none'}]`);
+      console.log(`Result: ${token.access_token}\n`);
+    } else if (command === 'revoketoken') {
+      const [token] = args;
+      if (!args) {
+        console.log('Usage: revoketoken <token>');
+      }
+      const authService = app.get(AuthService);
+      const res = await authService.revokeToken(token);
+
+      if (res) {
+        console.log('successfully revoked token');
+      }
+    } else if (command === 'status') {
+      console.log('Server is healthy and running on port 3000');
+    }
+  }
 }
 bootstrap().catch(console.error);

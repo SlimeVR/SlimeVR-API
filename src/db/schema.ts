@@ -1,5 +1,13 @@
 import { defineRelations } from 'drizzle-orm';
-import { pgTable, text, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  boolean,
+  integer,
+  jsonb,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 export const Channel = pgTable('channels', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -29,6 +37,19 @@ export const Release = pgTable('release', {
     .references(() => Version.id),
 });
 
+export const Blocklist = pgTable('tokens', {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  access_token: varchar().notNull(),
+  isBlocked: boolean().default(false).notNull(),
+});
+
+export const ApiKey = pgTable('apiKey', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  owner: text().notNull(),
+  apiKey: varchar('api_key').notNull(),
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const relations = defineRelations({ Version, Channel, Release }, (r) => ({
   Channel: {
     versions: r.many.Version(),

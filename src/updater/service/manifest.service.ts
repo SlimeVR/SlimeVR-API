@@ -3,6 +3,7 @@ import { generateManifest } from '../manifest/generateManifest';
 import { Channel, Version, Release } from '../../db/schema';
 import manifest from '../../../manifests/update-manifest.json';
 import { DatabaseService } from '../../db/db.service';
+import { API_URL } from '../../env';
 
 @Injectable()
 export class ManifestService {
@@ -47,10 +48,15 @@ export class ManifestService {
           versionData.builds
         )) {
           for (const [arch, releaseData] of Object.entries(architectures)) {
+            const goodUrl = releaseData.url.replace(
+              'https://github.com/SlimeVR/SlimeVR-Server/releases/download/',
+              `${API_URL}/download/stable/`
+            );
+            console.log(goodUrl);
             await this.dbService.db.insert(Release).values({
               platform: platform,
               architecture: arch,
-              url: releaseData.url,
+              url: goodUrl,
               checksum: releaseData.checksum || 'N/A',
               run: releaseData.run,
               versionId: insertedVersion.id,

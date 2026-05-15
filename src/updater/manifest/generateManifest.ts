@@ -23,9 +23,7 @@ if (!GITHUB_REPOSITORY) {
 }
 
 const [GITHUB_OWNER, GITHUB_REPO] = GITHUB_REPOSITORY.split('/');
-console.log(GITHUB_REPOSITORY);
-console.log(`Github owner: ${GITHUB_OWNER}`);
-console.log(`Github Repository: ${GITHUB_REPO}`);
+
 if (!GITHUB_OWNER || !GITHUB_REPO) {
   console.error('GITHUB_REPOSITORY must be in the format "owner/repo".');
   process.exit(1);

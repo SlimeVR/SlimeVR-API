@@ -17,6 +17,18 @@ export class VersionsService {
     private channelsService: ChannelsService
   ) {}
 
+  async getAllVersions() {
+    const channel = await this.channelsService.getDefaultChannel();
+
+    if (!channel) {
+      throw new NotFoundException('Default channel not configured');
+    }
+
+    const res = await this.dbService.db.select().from(schema.Version);
+
+    return res;
+  }
+
   async getAllVersionsFromDefaultChannel() {
     const channel = await this.channelsService.getDefaultChannel();
 

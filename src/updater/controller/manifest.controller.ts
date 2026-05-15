@@ -4,12 +4,14 @@ import { join } from 'path';
 import type { Response } from 'express';
 import { ManifestService } from '../services';
 import { ApiTags } from '@nestjs/swagger';
+import { Public } from '../../auth/public.decorator';
 
 @ApiTags('Manifest')
 @Controller('manifest')
 export class ManifestController {
   constructor(private readonly service: ManifestService) {}
 
+  @Public()
   @Get()
   getFile(@Res() res: Response) {
     const file = createReadStream(
