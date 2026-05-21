@@ -8,6 +8,7 @@ import * as readline from 'readline';
 import './instrument';
 import NESTIA_CONFIG from '../nestia.config';
 import { AuthService } from './auth/auth.service';
+import { ManifestService } from './updater/services';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -44,6 +45,9 @@ async function bootstrap() {
     '--- Live Console Active. Type "gentoken <userId>" to generate a JWT ---'
   );
   console.log('--- Type "revoketoken <token>" to revoke a JWT ---');
+  console.log(
+    '--- Type downloadfiles to populate server downloads from github ---'
+  );
   rl.on('line', (line) => {
     handleCommand(line).catch((err) =>
       console.error('Console Command Error:', err)
@@ -71,8 +75,21 @@ async function bootstrap() {
       if (res) {
         console.log('successfully revoked token');
       }
+    } else if (command === 'downloadfiles') {
+      const manifestService = app.get(ManifestService);
+      const res = manifestService.downloadFilesFromManifest();
+      console.log(res);
     } else if (command === 'status') {
       console.log('Server is healthy and running on port 3000');
+    } else {
+      console.log('Invalid command');
+      console.log(
+        '--- Live Console Active. Type "gentoken <userId>" to generate a JWT ---'
+      );
+      console.log('--- Type "revoketoken <token>" to revoke a JWT ---');
+      console.log(
+        '--- Type downloadfiles to populate server downloads from github ---'
+      );
     }
   }
 }

@@ -4,9 +4,10 @@ import { Services } from './services';
 import { DatabaseModule } from '../db/db.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, HttpModule],
   controllers: [...Controllers],
   providers: [
     ...Services,

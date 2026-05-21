@@ -19,6 +19,7 @@ export const Channel = pgTable('channels', {
 export const Version = pgTable('version', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   semver: text().notNull(),
+  minDriverVersion: text().notNull().default(''),
   changelog: text().notNull(),
   channelId: integer('channel_id')
     .notNull()

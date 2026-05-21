@@ -6,6 +6,7 @@ import { UpdaterModule } from './updater/updater.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     DatabaseModule.register(DATABASE_URL),
     UpdaterModule,
     AuthModule,
+    HttpModule,
   ],
   controllers: [],
   providers: [

@@ -1,0 +1,29 @@
+services:
+  drizzle-postgres:
+    image: postgres:latest
+    container_name: drizzle-postgres
+    restart: always
+
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: SlimeVR_API
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - drizzle-postgres
+
+volumes:
+  postgres_data:

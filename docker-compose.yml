@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: slimevr-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-user.sql:/docker-entrypoint-initdb.d/init-user.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - slimevr-api-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: slimevr-api-prod
+    restart: always
+    stdin_open: true
+    tty: true
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      API_URL: ${API_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET}
+      GITHUB_REPOSITORY: SlimeVR/SlimeVR-Server
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/api', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./downloads:/app/downloads/slimevr-server
+    networks:
+      - slimevr-api-network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.slimevr-api.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.slimevr-api.entrypoints=websecure"
+      - "traefik.http.routers.slimevr-api.tls=true"
+      - "traefik.http.routers.slimevr-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.slimevr-api.loadbalancer.server.port=3000"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: slimevr-pgadmin-prod
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - slimevr-api-network
+
+volumes:
+  postgres_data:
+    driver: local
+  slimevr_downloads:
+    driver: local
+
+networks:
+  slimevr-api-network:
+    driver: bridge
+  traefik:
+    external: true

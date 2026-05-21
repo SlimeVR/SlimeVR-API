@@ -20,6 +20,10 @@ export class ManifestController {
     file.pipe(res);
   }
 
+  @Post('/downloadfiles')
+  async downloadFilesFromManifest() {
+    return await this.service.downloadFilesFromManifest();
+  }
   @Post('/seed')
   async seedDatabaseFromManifest() {
     return await this.service.seedfromManifest();
