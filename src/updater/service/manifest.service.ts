@@ -6,11 +6,10 @@ import { API_URL } from '../../env';
 import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import * as fs from 'fs/promises';
+import { createWriteStream } from 'fs';
 import { firstValueFrom } from 'rxjs';
-import { createReadStream, createWriteStream } from 'fs';
 import { HttpService } from '@nestjs/axios';
-import { createGzip, createDeflate } from 'zlib';
-import { pipeline } from 'stream/promises';
+import AdmZip from 'adm-zip';
 
 let manifest: unknown;
 
@@ -91,7 +90,6 @@ export class ManifestService {
             if (!baseFilename) continue;
 
             const isAppImage = baseFilename.endsWith('.appimage');
-
             const targetFilename = isAppImage
               ? `${baseFilename}.zip`
               : baseFilename;
@@ -134,14 +132,12 @@ export class ManifestService {
                   `Found uncompressed file: ${uncompressedFile}. Compressing to ZIP...`
                 );
 
-                await pipeline(
-                  createReadStream(uncompressedPath),
-                  createDeflate(),
-                  createWriteStream(destPath)
-                );
+                const zip = new AdmZip();
+                zip.addLocalFile(uncompressedPath);
+                await zip.writeZipPromise(destPath);
 
                 console.log(
-                  `Compression complete. Deleting original: ${uncompressedFile}`
+                  `ZIP created successfully. Deleting original: ${uncompressedFile}`
                 );
                 await fs.unlink(uncompressedPath);
                 continue;
@@ -149,23 +145,30 @@ export class ManifestService {
 
               console.log(`Downloading: ${targetFilename}...`);
 
-              const response = await firstValueFrom(
-                this.httpService.get(url, { responseType: 'stream' })
-              );
-
-              const downloadStream = response.data as NodeJS.ReadableStream;
-              const writer = createWriteStream(destPath);
-
               if (isAppImage) {
-                console.log(
-                  `Compressing AppImage on-the-fly into: ${targetFilename}`
+                const response = await firstValueFrom(
+                  this.httpService.get(url, { responseType: 'arraybuffer' })
                 );
-                await pipeline(downloadStream, createGzip(), writer);
-              } else {
-                await pipeline(downloadStream, writer);
-              }
 
-              console.log(`Successfully saved to ${destPath}`);
+                const zip = new AdmZip();
+                zip.addFile(baseFilename, Buffer.from(response.data));
+                await zip.writeZipPromise(destPath);
+                console.log(
+                  `Successfully packed downloaded AppImage into valid ZIP: ${destPath}`
+                );
+              } else {
+                const response = await firstValueFrom(
+                  this.httpService.get(url, { responseType: 'stream' })
+                );
+                const writer = createWriteStream(destPath);
+
+                await new Promise<void>((resolve, reject) => {
+                  (response.data as NodeJS.ReadableStream).pipe(writer);
+                  writer.on('finish', resolve);
+                  writer.on('error', reject);
+                });
+                console.log(`Successfully saved to ${destPath}`);
+              }
             } catch (error: unknown) {
               const errorMsg =
                 error instanceof Error ? error.message : String(error);

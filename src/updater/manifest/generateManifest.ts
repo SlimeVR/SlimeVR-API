@@ -39,7 +39,7 @@ const LINUX_AMD64_APPIMAGE_FILENAME = 'SlimeVR-amd64.AppImage';
 const LINUX_AMD64_APPIMAGE_FILENAME_ALT = 'SlimeVR-amd64.appimage';
 const UPDATE_CONFIG_FILENAME = 'update-config.json';
 const INVALID_VERSION = '0.0.0-invalid' as Version;
-const NEWEST_UNSUPPORTED_VERSION = new SemVer('0.12.0');
+const NEWEST_UNSUPPORTED_VERSION = new SemVer('0.18.0');
 
 const STABLE_CHANNEL: UpdateConfig = {
   channel: {
