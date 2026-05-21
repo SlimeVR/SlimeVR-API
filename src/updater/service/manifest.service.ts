@@ -7,8 +7,10 @@ import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import * as fs from 'fs/promises';
 import { firstValueFrom } from 'rxjs';
-import { createWriteStream } from 'fs';
+import { createReadStream, createWriteStream } from 'fs';
 import { HttpService } from '@nestjs/axios';
+import { createGzip, createDeflate } from 'zlib';
+import { pipeline } from 'stream/promises';
 
 let manifest: unknown;
 
@@ -85,48 +87,89 @@ export class ManifestService {
             const url = release.url as string;
             if (!url) continue;
 
-            const filename = url.split('/').pop()?.toLowerCase();
-            if (!filename) continue;
+            const baseFilename = url.split('/').pop()?.toLowerCase();
+            if (!baseFilename) continue;
 
-            const destPath = path.join(targetDir, filename);
+            const isAppImage = baseFilename.endsWith('.appimage');
+
+            const targetFilename = isAppImage
+              ? `${baseFilename}.zip`
+              : baseFilename;
+            const destPath = path.join(targetDir, targetFilename);
 
             try {
               const existingFiles = await fs.readdir(targetDir);
-              const existingFile = existingFiles.find(
-                (f) => f.toLowerCase() === filename
+              const normalizedExistingFiles = existingFiles.map((f) =>
+                f.toLowerCase()
               );
 
-              if (existingFile) {
-                if (existingFile !== filename) {
-                  const oldPath = path.join(targetDir, existingFile);
+              if (normalizedExistingFiles.includes(targetFilename)) {
+                const exactExistingFile = existingFiles.find(
+                  (f) => f.toLowerCase() === targetFilename
+                );
+                if (exactExistingFile && exactExistingFile !== targetFilename) {
                   console.log(
-                    `Normalizing existing filename ${existingFile} to ${filename}`
+                    `Normalizing existing filename ${exactExistingFile} to ${targetFilename}`
                   );
-                  await fs.rename(oldPath, destPath);
+                  await fs.rename(
+                    path.join(targetDir, exactExistingFile),
+                    destPath
+                  );
                 } else {
-                  console.log(`Skipping: ${filename} (Already exists)`);
+                  console.log(`Skipping: ${targetFilename} (Already exists)`);
                 }
                 continue;
               }
 
-              console.log(`Downloading: ${filename}...`);
+              if (
+                isAppImage &&
+                normalizedExistingFiles.includes(baseFilename)
+              ) {
+                const uncompressedFile = existingFiles.find(
+                  (f) => f.toLowerCase() === baseFilename
+                )!;
+                const uncompressedPath = path.join(targetDir, uncompressedFile);
+
+                console.log(
+                  `Found uncompressed file: ${uncompressedFile}. Compressing to ZIP...`
+                );
+
+                await pipeline(
+                  createReadStream(uncompressedPath),
+                  createDeflate(),
+                  createWriteStream(destPath)
+                );
+
+                console.log(
+                  `Compression complete. Deleting original: ${uncompressedFile}`
+                );
+                await fs.unlink(uncompressedPath);
+                continue;
+              }
+
+              console.log(`Downloading: ${targetFilename}...`);
 
               const response = await firstValueFrom(
                 this.httpService.get(url, { responseType: 'stream' })
               );
 
-              await new Promise<void>((resolve, reject) => {
-                const writer = createWriteStream(destPath);
-                (response.data as NodeJS.ReadableStream).pipe(writer);
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-              });
+              const downloadStream = response.data as NodeJS.ReadableStream;
+              const writer = createWriteStream(destPath);
+
+              if (isAppImage) {
+                console.log(
+                  `Compressing AppImage on-the-fly into: ${targetFilename}`
+                );
+                await pipeline(downloadStream, createGzip(), writer);
+              } else {
+                await pipeline(downloadStream, writer);
+              }
 
               console.log(`Successfully saved to ${destPath}`);
             } catch (error: unknown) {
               const errorMsg =
                 error instanceof Error ? error.message : String(error);
-              console.error(`Failed to download ${url}: ${errorMsg}`);
+              console.error(`Failed to process ${url}: ${errorMsg}`);
             }
           }
         }
@@ -206,7 +249,13 @@ export class ManifestService {
             architectures as Record<string, unknown>
           )) {
             const release = releaseData as Record<string, unknown>;
-            const goodUrl = (release.url as string).replace(
+            let sourceUrl = release.url as string;
+
+            if (sourceUrl.toLowerCase().endsWith('.appimage')) {
+              sourceUrl = `${sourceUrl}.zip`;
+            }
+
+            const goodUrl = sourceUrl.replace(
               'https://github.com/SlimeVR/SlimeVR-Server/releases/download/',
               `${API_URL}/download/stable/`
             );
