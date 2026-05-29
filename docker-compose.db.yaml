@@ -5,9 +5,9 @@ services:
     restart: always
 
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: slime
       POSTGRES_PASSWORD: example
-      POSTGRES_DB: SlimeVR_API
+      POSTGRES_DB: SlimeVR-Updater
     ports:
       - "5432:5432"
     volumes:
