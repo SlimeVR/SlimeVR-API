@@ -188,7 +188,8 @@ export class generateManifest {
       builds.windows = {
         x86_64: {
           url: windowsx8664ZIP.browser_download_url,
-          checksum: '',
+          checksum:
+            windowsx8664ZIP.digest != null ? windowsx8664ZIP.digest : '',
           run: ['$_BINARY_$'],
         },
       };
@@ -202,7 +203,8 @@ export class generateManifest {
       builds.linux = {
         x86_64: {
           url: linuxAMD64AppImage.browser_download_url,
-          checksum: '',
+          checksum:
+            linuxAMD64AppImage.digest != null ? linuxAMD64AppImage.digest : '',
           run: ['$_BINARY_$'],
         },
       };
@@ -219,6 +221,8 @@ export class generateManifest {
             ...build,
             ...config.overrides[platform][arch],
             url: config.overrides[platform][arch].url || build.url,
+            checksum:
+              config.overrides[platform][arch].checksum || build.checksum,
           };
         }
       }
