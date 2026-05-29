@@ -276,10 +276,30 @@ export class ManifestService {
               )
               .limit(1);
 
+            const manifestChecksum = (release.checksum as string) || 'N/A';
+
             if (existingRelease) {
-              console.log(
-                `Skipping duplicate release for ${platform}/${arch} ${versionSemver}`
-              );
+              // If it exists but has an empty/placeholder checksum field, update it
+              const currentDbChecksum = existingRelease.checksum;
+              if (
+                !currentDbChecksum ||
+                currentDbChecksum === '' ||
+                currentDbChecksum === 'N/A'
+              ) {
+                if (manifestChecksum !== 'N/A' && manifestChecksum !== '') {
+                  console.log(
+                    `Updating empty checksum for ${platform}/${arch} ${versionSemver} to: ${manifestChecksum}`
+                  );
+                  await this.dbService.db
+                    .update(Release)
+                    .set({ checksum: manifestChecksum })
+                    .where(eq(Release.id, existingRelease.id));
+                }
+              } else {
+                console.log(
+                  `Skipping duplicate release for ${platform}/${arch} ${versionSemver}`
+                );
+              }
               continue;
             }
 
@@ -287,7 +307,7 @@ export class ManifestService {
               platform: platform,
               architecture: arch,
               url: normalizedGoodUrl,
-              checksum: (release.checksum as string) || 'N/A',
+              checksum: manifestChecksum,
               run: release.run || [],
               versionId: insertedVersion.id,
             });
