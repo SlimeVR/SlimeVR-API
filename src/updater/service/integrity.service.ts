@@ -3,6 +3,9 @@ import { DatabaseService } from '../../db/db.service';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as Schema from '../../db/schema';
+import { like } from 'drizzle-orm';
+import { Injectable } from '@nestjs/common';
 
 export interface ChecksumEntry {
   fileName: string;
@@ -50,30 +53,55 @@ export function generateChecksumFile(filePath: string) {
   zip.writeZip(absolutePath);
 }
 
+export function getAllFiles(source: string): string[] {
+  return fs
+    .readdirSync(source, { withFileTypes: true })
+    .reduce((files: string[], dirent) => {
+      const fullPath = path.join(source, dirent.name);
+
+      if (dirent.isDirectory()) {
+        return [...files, ...getAllFiles(fullPath)];
+      } else if (dirent.isFile()) {
+        if (dirent.name.endsWith('.json')) {
+          return files;
+        }
+        return [...files, fullPath];
+      }
+
+      return files;
+    }, []);
+}
+
+@Injectable()
 export class IntegrityService {
   constructor(private dbService: DatabaseService) {}
 
+  async generateChecksumForAllZipFiles() {
+    const downloadsPath = path.resolve(process.cwd(), 'downloads');
+    const directoryArray = getAllFiles(downloadsPath);
+
+    for (const filePath of directoryArray) {
+      if (path.extname(filePath).toLowerCase() !== '.zip') continue;
+
+      const relativePath = path.relative(downloadsPath, filePath);
+      const normalizedPath = relativePath.replace(/\\/g, '/');
+      const urlMatchSegment = normalizedPath.replace('slimevr-server/', '');
+      console.log(urlMatchSegment);
+      const fileBuffer = fs.readFileSync(filePath);
+      const SHA = calculateFileSha256(fileBuffer);
+
+      const [res] = await this.dbService.db
+        .update(Schema.Release)
+        .set({ checksum: SHA })
+        .where(like(Schema.Release.url, `%${urlMatchSegment}`))
+        .returning();
+
+      console.log(res);
+    }
+  }
+
   generateChecksumForAllReleases() {
     const downloadsPath = path.resolve(process.cwd(), 'downloads');
-    const getAllFiles = (source: string): string[] => {
-      return fs
-        .readdirSync(source, { withFileTypes: true })
-        .reduce((files: string[], dirent) => {
-          const fullPath = path.join(source, dirent.name);
-
-          if (dirent.isDirectory()) {
-            return [...files, ...getAllFiles(fullPath)];
-          } else if (dirent.isFile()) {
-            if (dirent.name.endsWith('.json')) {
-              return files;
-            }
-            return [...files, fullPath];
-          }
-
-          return files;
-        }, []);
-    };
-
     const directoryArray = getAllFiles(downloadsPath);
 
     directoryArray.forEach((filePath) => {

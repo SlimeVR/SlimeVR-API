@@ -85,6 +85,9 @@ async function bootstrap() {
     } else if (command === 'genintegrity') {
       const integrityService = app.get(IntegrityService);
       integrityService.generateChecksumForAllReleases();
+    } else if (command == 'genzipintegrity') {
+      const integrityService = app.get(IntegrityService);
+      await integrityService.generateChecksumForAllZipFiles();
     } else {
       console.log('Invalid command');
       console.log(
