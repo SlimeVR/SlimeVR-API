@@ -9,6 +9,7 @@ import './instrument';
 import NESTIA_CONFIG from '../nestia.config';
 import { AuthService } from './auth/auth.service';
 import { ManifestService } from './updater/services';
+import { IntegrityService } from './updater/service/integrity.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -81,6 +82,9 @@ async function bootstrap() {
       console.log(res);
     } else if (command === 'status') {
       console.log('Server is healthy and running on port 3000');
+    } else if (command === 'genintegrity') {
+      const integrityService = app.get(IntegrityService);
+      integrityService.generateChecksumForAllReleases();
     } else {
       console.log('Invalid command');
       console.log(
